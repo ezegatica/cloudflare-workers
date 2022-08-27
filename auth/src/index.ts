@@ -45,7 +45,7 @@ export default {
 
     switch (pathname) {
       case "/":
-        return new Response("welcome");
+        return Response.redirect("https://ezegatica.com");
       case "/login":
         if (request.method !== "POST") {
           return new WrongMethodException();
@@ -58,9 +58,9 @@ export default {
         if (!password || password !== body.password) {
           return new LoginFailedException();
         }
-		const secretNullable = await env.USERS.get("secret");
+        const secretNullable = await env.USERS.get("secret");
 
-		const secret = JSON.parse(JSON.stringify(secretNullable)) as string;
+        const secret = JSON.parse(JSON.stringify(secretNullable)) as string;
 
         const token = await jwt.sign({ email: body.email }, secret, {
           algorithm: "HS256",
