@@ -67,13 +67,39 @@ export default {
         });
 
         return new Response(token);
-      case "check": {
-        const token = await jwt.verify(
-          request.headers.get("Authorization") as string,
-          env.token,
-          { algorithm: "HS256" }
-        );
-        return new Response(token);
+      case "/check": {
+        if (request.method !== "POST") {
+          return new WrongMethodException();
+        }
+        const secretNullable = await env.USERS.get("secret");
+
+        const secret = JSON.parse(JSON.stringify(secretNullable)) as string;
+        try {
+          const valid = await jwt.verify(
+            request.headers.get("Authorization") as string,
+            secret,
+            { algorithm: "HS256" }
+          );
+          const body = {
+            valid,
+          };
+          const json = JSON.stringify(body, null, 2);
+          return new Response(json, {
+            headers: {
+              "content-type": "application/json;charset=UTF-8",
+            },
+          });
+        } catch (error) {
+          const body = {
+            valid: false,
+          };
+          const json = JSON.stringify(body, null, 2);
+          return new Response(json, {
+            headers: {
+              "content-type": "application/json;charset=UTF-8",
+            },
+          });
+        }
       }
 
       default: {
