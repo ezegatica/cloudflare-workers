@@ -67,6 +67,14 @@ export default {
         });
 
         return new Response(token);
+      case "check": {
+        const token = await jwt.verify(
+          request.headers.get("Authorization") as string,
+          env.token,
+          { algorithm: "HS256" }
+        );
+        return new Response(token);
+      }
 
       default: {
         return new NotFoundException();
