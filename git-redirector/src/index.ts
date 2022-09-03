@@ -25,13 +25,22 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<Response> {
-    const base = "https://github.com/ezegatica";
+    const base = "https://github.com/ezegatica/";
     const statusCode = 301;
     const url = new URL(request.url);
-    const { pathname, search } = url;
+    const { pathname, searchParams } = url;
+    const path = pathname.split("/");
+    const branch = searchParams.get('branch') || 'main';
 
-    const destinationURL = base + pathname + search;
+    const firstPath = path[1];
+    const restPath = path.slice(2).join("/");
 
-    return Response.redirect(destinationURL, statusCode);
+    if (restPath) {
+      const destinationURL = base + firstPath + `/blob/${branch}/` + restPath;
+      return Response.redirect(destinationURL, statusCode);
+    } else {
+      const destinationURL = base + firstPath;
+      return Response.redirect(destinationURL, statusCode);
+    }
   },
 };
