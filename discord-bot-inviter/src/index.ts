@@ -25,7 +25,7 @@ export default {
 		env: Env,
 		ctx: ExecutionContext
 	): Promise<Response> {
-		const destinationURL = "https://discord.com/api/oauth2/authorize?client_id=696557662447599706&permissions=1239533694518&scope=bot";
+		const destinationURL = "https://discord.com/api/oauth2/authorize?client_id=696557662447599706&permissions=1237117627456&scope=bot";
 		return Response.redirect(destinationURL, 301);
 	},
 };
