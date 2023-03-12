@@ -1,5 +1,7 @@
 export interface Env {
-	SPOTIFY_TOKEN: string;
+	SPOTIFY_CLIENT_ID: string;
+	SPOTIFY_CLIENT_SECRET: string;
+	SPOTIFY_REFRESH_TOKEN: string;
 }
 
 export default {
@@ -8,23 +10,26 @@ export default {
 		env: Env,
 		_ctx: ExecutionContext
 	): Promise<Response> {
+		const auth: {access_token: string} = await fetch('https://accounts.spotify.com/api/token', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Authorization': `Basic ${btoa(`${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`)}`
+			},
+			body: `grant_type=refresh_token&refresh_token=${env.SPOTIFY_REFRESH_TOKEN}&client_id=${env.SPOTIFY_CLIENT_ID}`
+		}).then((res) => res.json());
+		
 		const data: SpotifyResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing?market=ES', {
 			headers: {
-				'Authorization': `Bearer ${env.SPOTIFY_TOKEN}`			
+				'Authorization': `Bearer ${auth.access_token}`			
 			},
 		}).then((res) => res.json());
-		if (!data.item){
+		if (data.error){
 			return Response.json({
-				nothingPlaying: true,
-				title: '',
-				artist: '',
-				album: '',
-				albumArt: '',
-				link: '',
+				error: data.error
 			})
 		}
 		return Response.json({
-			nothingPlaying: false,
 			title: data.item.name,
 			artist: data.item.artists[0].name,
 			album: data.item.album.name,
@@ -107,4 +112,9 @@ type SpotifyResponse = {
 	  type: string;
 	  uri: string;
 	};
+  } & {
+	error: {
+		status: number;
+		message: string;
+	}
   };
