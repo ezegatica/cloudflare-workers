@@ -33,7 +33,7 @@ export default {
 			title: data.item.name,
 			artist: data.item.artists[0].name,
 			album: data.item.album.name,
-			albumArt: data.item.album.images[0].url,
+			albumArt: data.item.album.images[2].url,
 			link: data.item.external_urls.spotify,
 		});
 
