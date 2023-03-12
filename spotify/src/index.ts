@@ -29,13 +29,19 @@ export default {
 				error: data.error
 			})
 		}
-		return Response.json({
+		const response = Response.json({
 			title: data.item.name,
 			artist: data.item.artists[0].name,
 			album: data.item.album.name,
 			albumArt: data.item.album.images[0].url,
 			link: data.item.external_urls.spotify,
-		})
+		});
+
+		response.headers.set('Access-Control-Allow-Origin', '*');
+		response.headers.set('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, OPTIONS');
+		response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+
+		return response;
 	},
 };
 
