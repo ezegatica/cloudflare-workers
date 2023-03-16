@@ -36,7 +36,7 @@ export default {
       .catch((err) => {
         return {
           error: {
-            status: 500,
+            status: 404,
             message: "No music playing",
             error: {
               message: err.message,
