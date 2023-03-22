@@ -1,4 +1,4 @@
-name = "auth-service"
+name = "auth"
 main = "src/index.ts"
 compatibility_date = "2022-08-26"
 kv_namespaces = [

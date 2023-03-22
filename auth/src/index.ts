@@ -28,6 +28,12 @@ export interface Env {
   // MY_DURABLE_OBJECT: DurableObjectNamespace;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+  "Access-Control-Max-Age": "86400",
+};
+
 export default {
   async fetch(
     request: Request,
@@ -41,6 +47,10 @@ export default {
       "https" !== request.headers.get("x-forwarded-proto")
     ) {
       return new WrongProtocolException();
+    }
+
+    if (request.method === "OPTIONS") {
+      return this.handleOptions(request);
     }
 
     switch (pathname) {
@@ -65,8 +75,14 @@ export default {
         const token = await jwt.sign({ email: body.email }, secret, {
           algorithm: "HS256",
         });
-
-        return new Response(token);
+        return new Response(token, {
+            headers: {
+              "Content-Type": "text/plain",
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+            }
+        });
 
       case "/check": {
         if (request.method !== "POST") {
@@ -74,14 +90,45 @@ export default {
         }
         const token = request.headers.get("Authorization")?.split(" ")[1] as string;
         const valid = await this.verifyToken(env, token);
-        return Response.json({
+       return Response.json({
           valid
+        }, {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+          }
         });
       }
 
       default: {
         return new NotFoundException();
       }
+    }
+  },
+  async handleOptions(request: Request): Promise<Response> {
+    if (
+      request.headers.get("Origin") !== null &&
+      request.headers.get("Access-Control-Request-Method") !== null &&
+      request.headers.get("Access-Control-Request-Headers") !== null
+    ) {
+      // Handle CORS preflight requests.
+      return new Response(null, {
+        headers: {
+          ...corsHeaders,
+          "Access-Control-Allow-Headers": request.headers.get(
+            "Access-Control-Request-Headers"
+          ) as string,
+        },
+      });
+    } else {
+      // Handle standard OPTIONS request.
+      return new Response(null, {
+        headers: {
+          Allow: "GET, HEAD, POST, OPTIONS",
+        },
+      });
     }
   },
   async verifyToken(env: Env, token: string): Promise<boolean> {

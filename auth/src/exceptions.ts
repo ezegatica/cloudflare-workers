@@ -4,6 +4,9 @@ export class LoginFailedException extends Response {
       status: 401,
       headers: {
         "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
@@ -15,6 +18,9 @@ export class WrongMethodException extends Response {
       status: 405,
       headers: {
         "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
@@ -26,6 +32,9 @@ export class NotFoundException extends Response {
       status: 404,
       headers: {
         "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
@@ -37,6 +46,9 @@ export class WrongProtocolException extends Response {
       status: 403,
       headers: {
         "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
@@ -48,6 +60,9 @@ export class EmptyBodyException extends Response {
       status: 400,
       headers: {
         "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
@@ -59,6 +74,9 @@ export class UnauthorizedException extends Response {
       status: 401,
       headers: {
         "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
       },
     });
   }
