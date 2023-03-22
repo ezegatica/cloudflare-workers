@@ -1,6 +1,6 @@
 export class LoginFailedException extends Response {
   constructor() {
-    super("Login failed", {
+    super("Your email and passwords do not match", {
       status: 401,
       headers: {
         "Content-Type": "text/plain",
