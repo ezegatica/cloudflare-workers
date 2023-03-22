@@ -52,3 +52,14 @@ export class EmptyBodyException extends Response {
     });
   }
 }
+
+export class UnauthorizedException extends Response {
+  constructor() {
+    super("Token invalido", {
+      status: 401,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  }
+}

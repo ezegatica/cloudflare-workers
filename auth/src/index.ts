@@ -12,6 +12,7 @@ import {
   EmptyBodyException,
   LoginFailedException,
   NotFoundException,
+  UnauthorizedException,
   WrongMethodException,
   WrongProtocolException,
 } from "./exceptions";
@@ -22,7 +23,6 @@ export interface Env {
   // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
   USERS: KVNamespace;
 
-  token: string;
   //
   // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
   // MY_DURABLE_OBJECT: DurableObjectNamespace;
@@ -67,44 +67,33 @@ export default {
         });
 
         return new Response(token);
+
       case "/check": {
         if (request.method !== "POST") {
           return new WrongMethodException();
         }
-        const secretNullable = await env.USERS.get("secret");
-
-        const secret = JSON.parse(JSON.stringify(secretNullable)) as string;
-        try {
-          const valid = await jwt.verify(
-            request.headers.get("Authorization") as string,
-            secret,
-            { algorithm: "HS256" }
-          );
-          const body = {
-            valid,
-          };
-          const json = JSON.stringify(body, null, 2);
-          return new Response(json, {
-            headers: {
-              "content-type": "application/json;charset=UTF-8",
-            },
-          });
-        } catch (error) {
-          const body = {
-            valid: false,
-          };
-          const json = JSON.stringify(body, null, 2);
-          return new Response(json, {
-            headers: {
-              "content-type": "application/json;charset=UTF-8",
-            },
-          });
-        }
+        const token = request.headers.get("Authorization")?.split(" ")[1] as string;
+        const valid = await this.verifyToken(env, token);
+        return Response.json({
+          valid
+        });
       }
 
       default: {
         return new NotFoundException();
       }
+    }
+  },
+  async verifyToken(env: Env, token: string): Promise<boolean> {
+    const secretNullable = await env.USERS.get("secret");
+
+    const secret = JSON.parse(JSON.stringify(secretNullable)) as string;
+
+    try {
+      const valid = await jwt.verify(token, secret, { algorithm: "HS256" });
+      return valid;
+    } catch (error) {
+      return false;
     }
   },
 };
