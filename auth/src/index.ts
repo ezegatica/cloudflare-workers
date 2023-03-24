@@ -81,6 +81,7 @@ export default {
               "Access-Control-Allow-Origin": "*",
               "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
               "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+              "Set-Cookie": `token=${token}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=31536000;`,
             }
         });
 
