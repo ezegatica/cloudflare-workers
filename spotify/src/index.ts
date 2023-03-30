@@ -6,10 +6,13 @@ export interface Env {
 
 export default {
   async fetch(
-    _request: Request,
+    request: Request,
     env: Env,
     _ctx: ExecutionContext
   ): Promise<Response> {
+    if (request.method === "OPTIONS") {
+      return this.handleOptions(request);
+    }
     const auth: { access_token: string } = await fetch(
       "https://accounts.spotify.com/api/token",
       {
@@ -72,6 +75,35 @@ export default {
     response.headers.set("Access-Control-Allow-Headers", "Content-Type");
 
     return response;
+  },
+  async handleOptions(request: Request): Promise<Response> {
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+      "Access-Control-Max-Age": "86400",
+    };
+    if (
+      request.headers.get("Origin") !== null &&
+      request.headers.get("Access-Control-Request-Method") !== null &&
+      request.headers.get("Access-Control-Request-Headers") !== null
+    ) {
+      // Handle CORS preflight requests.
+      return new Response(null, {
+        headers: {
+          ...corsHeaders,
+          "Access-Control-Allow-Headers": request.headers.get(
+            "Access-Control-Request-Headers"
+          ) as string,
+        },
+      });
+    } else {
+      // Handle standard OPTIONS request.
+      return new Response(null, {
+        headers: {
+          Allow: "GET, HEAD, POST, OPTIONS",
+        },
+      });
+    }
   },
 };
 
