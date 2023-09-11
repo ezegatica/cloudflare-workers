@@ -31,6 +31,7 @@ export default {
 		env: Env,
 		_ctx: ExecutionContext
 	): Promise<Response> {
+		return Response.json({error: "Twitter Api 2.0 destroyed this app. Thanks for everything :("}, {status: 555});
 		const url = new URL(request.url);
 		const path = url.pathname.split("/");
 		const tweetId = path[3];
