@@ -18,26 +18,63 @@ export default {
 		switch (pathname) {
 			case '/status':
 				const randomNumber = Math.floor(Math.random() * 10) + 1;
+				let message: string;
+
 				if (randomNumber === 1) {
-					return new Response('SCHEDULED MAINTENANCE', { status: 200 });
+					message = 'SCHEDULED MAINTENANCE';
 				} else if (randomNumber === 2) {
-					return new Response('HIGH LATENCY', { status: 200 });
+					message = 'HIGH LATENCY';
 				} else if (randomNumber === 3) {
-					return new Response('SERVICE DOWN, CHECK AGAIN LATER', { status: 200 });
+					message = 'SERVICE DOWN, CHECK AGAIN LATER';
 				} else {
-					return new Response('OK', { status: 200 });
+					message = 'OK';
 				}
+
+				console.log(`> System Status: ${message}`);
+				return new Response(message, { status: 200 });
 			case '/balance': {
 				const randomNumber = Math.floor(Math.random() * 1000);
+
+				console.log(`> Account Balance: $${randomNumber}`);
 				return new Response(randomNumber.toString(), { status: 200 });
 			}
 			case '/transaction': {
 				const randomNumber = Math.floor(Math.random() * 4) + 1;
+				let message: string;
+				let status: number;
+
 				if (randomNumber === 1) {
-					return new Response('Insuficient balance', { status: 400 });
+					message = 'Insufficient balance';
+					status = 400;
+				} else {
+					message = 'Transaction successful';
+					status = 200;
 				}
 
-				return new Response('Transaction successful', { status: 200 });
+				console.log(`> Transaction Status: ${message}`);
+
+				return new Response(message, { status: status });
+			}
+
+			case '/account-status': {
+				const randomNumber = Math.floor(Math.random() * 10) + 1;
+				let message: string;
+
+				if (randomNumber === 1) {
+					message = 'SUSPICIOUS ACTIVITY';
+				} else if (randomNumber === 2) {
+					message = 'INACTIVITY LOCK';
+				} else if (randomNumber === 3) {
+					message = 'PASSWORD EXPIRED';
+				} else if (randomNumber === 4) {
+					message = 'SECURITY LOCK';
+				} else {
+					message = 'ACCOUNT OK';
+				}
+
+				console.log(`> Account Status: ${message}`);
+
+				return new Response(message, { status: 200 });
 			}
 
 			default: {
