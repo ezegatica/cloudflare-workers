@@ -37,7 +37,7 @@ export default {
 					return new Response('Insuficient balance', { status: 400 });
 				}
 
-				return new Response('Transaction successful', { status: 500 });
+				return new Response('Transaction successful', { status: 200 });
 			}
 
 			default: {
