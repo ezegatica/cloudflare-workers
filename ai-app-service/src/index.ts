@@ -17,7 +17,7 @@ export default {
 
 		switch (pathname) {
 			case '/status':
-				const randomNumber = Math.floor(Math.random() * 10) + 1;
+				const randomNumber = Math.floor(Math.random() * 4) + 1;
 				let message: string;
 
 				if (randomNumber === 1) {
@@ -39,7 +39,7 @@ export default {
 				return new Response(randomNumber.toString(), { status: 200 });
 			}
 			case '/transaction': {
-				const randomNumber = Math.floor(Math.random() * 4) + 1;
+				const randomNumber = Math.floor(Math.random() * 2) + 1;
 				let message: string;
 				let status: number;
 
@@ -57,7 +57,7 @@ export default {
 			}
 
 			case '/account-status': {
-				const randomNumber = Math.floor(Math.random() * 10) + 1;
+				const randomNumber = Math.floor(Math.random() * 5) + 1;
 				let message: string;
 
 				if (randomNumber === 1) {
