@@ -13,7 +13,7 @@
 
 export default {
 	async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		const { pathname } = new URL(req.url);
+		const { pathname, searchParams } = new URL(req.url);
 
 		switch (pathname) {
 			case '/status':
@@ -39,9 +39,16 @@ export default {
 				return new Response(randomNumber.toString(), { status: 200 });
 			}
 			case '/transaction': {
-				const randomNumber = Math.floor(Math.random() * 2) + 1;
+				let randomNumber = Math.floor(Math.random() * 2) + 1;
 				let message: string;
 				let status: number;
+
+				const receiptent = searchParams.get('recipient');
+				if (receiptent === 'Matt') {
+					randomNumber = 1; // Si el chabon se llama Matt, falla 100% (para demo)
+				} else if (receiptent === 'John') {
+					randomNumber = 2; // Si el chabon se llama John, pasa 100% (para demo)
+				}
 
 				if (randomNumber === 1) {
 					message = 'Insufficient balance';
