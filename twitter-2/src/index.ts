@@ -19,6 +19,8 @@ export default {
 		const url = new URL(request.url);
 		const path = url.pathname.split("/");
 		const tweetId = path[3];
+		const useApi = url.searchParams.get('api');
+		const useUrl = url.searchParams.get('url');
 
 		if (!tweetId) {
 			return Response.json({ error: "No tweet id found" }, { status: 400 });
@@ -55,6 +57,21 @@ export default {
 			return Response.json({error: "Tweet is not a video"}, {status: 400});
 		}
 		*/
+
+		// return Response.json(tweet);
+
+		if (useApi && useApi === 'true') {
+			return Response.json(tweet);
+		}
+
+		if ('tombstone' in tweet && tweet.tombstone) {
+			return Response.json({ tweetId, tombstone: true, error: "Tombstones (for the unaware, that's the grey banners like 'This Tweet was deleted by the Tweet author.' or 'You’re unable to view this Tweet because this account owner limits who can view their Tweets.' that you might see in place of an actual tweet) are currently discarded entirely. Yielding a snscrape.modules.twitter.TweetTombstone item for them would likely be a better option. It should always be possible to infer the tweet ID from the context." }, { status: 400 });
+		}
+
+		if ('notFound' in tweet && tweet.notFound) {
+			return Response.json({ tweetId, notFound: true, error: "Tweet not found" }, { status: 404 });
+		}
+
 		if ('data' in tweet && tweet.data.mediaDetails && tweet.data.mediaDetails[0] && tweet.data.mediaDetails[0].type === "video") {
 			try {
 				for (let j = 0; j < tweet.data.mediaDetails[0].video_info.variants.length; j++) {
@@ -71,14 +88,15 @@ export default {
 					return Response.json({ error: "No video found" }, { status: 400 });
 				}
 
-				// return new Response(hq_video_url);
+				if (useUrl && useUrl === 'true') {
+					return Response.json({url: hq_video_url});
+				}
 				return Response.redirect(hq_video_url, 307);
 
 			} catch (error) {
 				return Response.json({ error: "Tweet is not a video" }, { status: 400 });
 			}
-		} else {
-			return Response.json({ tweetId, error: "Tweet not found" }, { status: 404 });
-		}
+		} 
+		return Response.json({ tweetId, notFound: true, error: "Tweet not found" }, { status: 404 });		
 	},
 } satisfies ExportedHandler<Env>;
