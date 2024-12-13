@@ -1,4 +1,5 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
+import jwt from '@tsndr/cloudflare-worker-jwt';
 
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
@@ -13,20 +14,19 @@ import { WorkerEntrypoint } from 'cloudflare:workers';
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
-
-export class AdminEntrypoint extends WorkerEntrypoint {
-	async echo(message: string) {
-		await Promise.resolve();
-		return `Hello, ${message}`;
+export default class AuthWorker extends WorkerEntrypoint<Env> {
+	// Currently, entrypoints without a named handler are not supported
+	async fetch() {
+		return new Response(null, { status: 404 });
 	}
 
-	async sum(a: number, b: number) {
-		await Promise.resolve();
-		return a + b;
+	async validate(token: string) {
+		try {
+			const secretNullable = (await this.env.USERS_KV.get('secret')) as string;
+			const valid = await jwt.verify(token, secretNullable, { algorithm: 'HS256' });
+			return valid;
+		} catch (error) {
+			return false;
+		}
 	}
 }

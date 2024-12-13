@@ -2,5 +2,5 @@
 
 interface Env {
 	URLS_BINDING: KVNamespace;
-	AUTH: Service;
+	AUTH: Fetcher;
 }

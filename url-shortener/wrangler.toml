@@ -107,7 +107,6 @@ preview_id = "6d533816ae144809a2d86f71033aa9f2"
 [[services]]
 binding = "AUTH"
 service = "auth-2"
-entrypoint = "AdminEntrypoint"
 
 # Bind a Vectorize index. Use to store and query vector embeddings for semantic search, classification and other vector search use-cases.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#vectorize-indexes

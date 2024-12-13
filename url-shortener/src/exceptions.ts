@@ -56,7 +56,7 @@ export class WrongProtocolException extends Response {
 
 export class EmptyBodyException extends Response {
   constructor() {
-    super("No body was specified", {
+    super("Body invalido", {
       status: 400,
       headers: {
         "Content-Type": "text/plain",
@@ -79,5 +79,33 @@ export class UnauthorizedException extends Response {
         "Access-Control-Allow-Headers": "Content-Type",
       },
     });
+  }
+}
+
+export class InternalServerErrorException extends Response {
+  constructor() {
+    super("Internal Server Error", {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+}
+
+export class MissingFieldsException extends Response {
+  constructor() {
+    super("Missing required fields", {
+      status: 400,
+      headers: {
+        "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    })
   }
 }
