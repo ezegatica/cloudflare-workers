@@ -2,6 +2,6 @@ name = "auth"
 main = "src/index.ts"
 compatibility_date = "2022-08-26"
 kv_namespaces = [
-  { binding = "USERS", id = "f576e4cfd2c449bdaa3c561a25ee50d6", preview_id = "6415fb31e99449f1b2a168468320d80f" },
+  { binding = "USERS", id = "f576e4cfd2c449bdaa3c561a25ee50d6" },
 ]
 

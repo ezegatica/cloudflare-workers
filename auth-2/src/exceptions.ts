@@ -28,7 +28,7 @@ export class WrongMethodException extends Response {
 
 export class NotFoundException extends Response {
   constructor() {
-    super("No encontre esa URL en mi sistema :(", {
+    super("Could not find the specified resource", {
       status: 404,
       headers: {
         "Content-Type": "text/plain",
@@ -43,7 +43,7 @@ export class NotFoundException extends Response {
 export class WrongProtocolException extends Response {
   constructor() {
     super("Only HTTPS connections are allowed", {
-      status: 400,
+      status: 403,
       headers: {
         "Content-Type": "text/plain",
         "Access-Control-Allow-Origin": "*",

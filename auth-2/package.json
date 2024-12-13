@@ -1,11 +1,11 @@
 {
-  "name": "url-shortener",
+  "name": "auth-2",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev --remote",
-    "start": "wrangler dev --remote",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
     "test": "vitest",
     "cf-typegen": "wrangler types"
   },
@@ -15,8 +15,5 @@
     "typescript": "^5.5.2",
     "vitest": "2.1.8",
     "wrangler": "^3.60.3"
-  },
-  "dependencies": {
-    "@tsndr/cloudflare-worker-router": "^3.2.10"
   }
 }
