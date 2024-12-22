@@ -10,10 +10,12 @@ router.use(async ({ env, req }) => {
 		const header = req.headers.get('Authorization');
 		const token = header?.split(' ')[1];
 		if (!token) {
+			console.warn('No token provided');
 			throw new UnauthorizedException();
 		}
 		const isValidToken = await env.AUTH.validate(token);
 		if (!isValidToken) {
+			console.warn('Invalid token', token);
 			throw new UnauthorizedException();
 		}
 	} catch (error) {

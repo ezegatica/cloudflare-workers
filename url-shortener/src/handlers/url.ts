@@ -12,7 +12,7 @@ export class UrlHandler extends BaseHandler {
             slug = slug.slice(0, -5);
         }
 
-		const url = await this.env.URLS_BINDING.get(slug, { cacheTtl: 60 * 60 * 24 });
+		const url = await this.env.URLS_BINDING.get(slug);
 
 		if (!url) {
 			return new NotFoundException();
