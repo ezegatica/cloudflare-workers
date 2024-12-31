@@ -21,6 +21,9 @@ interface ApiResponse {
 }
 
 export default {
+	fetch(req, env, ctx) {
+		return new Response('https://qmp.ezegatica.com', { status: 200 });
+	},
 	// The scheduled handler is invoked at the interval set in our wrangler.toml's
 	// [[triggers]] configuration.
 	async scheduled(event, env, ctx): Promise<void> {
