@@ -31,7 +31,12 @@ export default {
 	async scheduled(event, env, ctx): Promise<void> {
 		// A Cron Trigger can make requests to other endpoints on the Internet,
 		// publish to a Queue, query a D1 Database, and much more.
-		const prod = await fetch('https://qmp.ezegatica.com/api/health/db');
+		const prod = await fetch('https://qmp.ezegatica.com/api/health/db', {
+			cf: {
+				cacheTtl: 0,
+				cacheEverything: false
+			}
+		});
 		if (!prod.ok) {
 			return handleError(env, 
 				`${prod.status} - ${prod.statusText} > ${await prod.text()}`
