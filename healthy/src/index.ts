@@ -31,45 +31,56 @@ export default {
 	async scheduled(event, env, ctx): Promise<void> {
 		// A Cron Trigger can make requests to other endpoints on the Internet,
 		// publish to a Queue, query a D1 Database, and much more.
-		const prod = await fetch('https://qmp.ezegatica.com/api/health/db', {
-			cf: {
-				cacheTtl: 0,
-				cacheEverything: false
+		const urls = ['https://qmp.ezegatica.com/api/health/db', 'https://qmp.preview.ezegatica.com/api/health/db'];
+
+		// Fetch the URLs concurrently
+		const responses = await Promise.all(
+			urls.map((url) => fetch(url, {
+				cf: {
+					cacheTtl: 0,
+					cacheEverything: false
+				}
+			}))
+		);
+
+		// Check the responses
+		for (const response of responses) {
+			const environment = response.url.includes('preview') ? 'preview' : 'production';
+			if (!response.ok) {
+				return handleError(env, 
+					`${response.status} - ${response.statusText} > ${await response.text()}`,
+					environment
+				);
 			}
-		});
-		if (!prod.ok) {
-			return handleError(env, 
-				`${prod.status} - ${prod.statusText} > ${await prod.text()}`
-			);
+	
+			const body = (await response.json()) as ApiResponse;
+	
+			if (body.result == null) {
+				return handleError(env, JSON.stringify(body), environment);
+			}
+			// You could store this result in KV, write to a D1 Database, or publish to a Queue.
+			// In this template, we'll just log the result:
+			console.log(`${new Date().toLocaleString('es-AR')} > [${environment}] > trigger fired at ${event.cron}: ${body.message}`);
 		}
 
-		const body = (await prod.json()) as ApiResponse;
-
-		if (body.result == null) {
-			return handleError(env, JSON.stringify(body));
-		}
-
-		// You could store this result in KV, write to a D1 Database, or publish to a Queue.
-		// In this template, we'll just log the result:
-		console.log(`${new Date().toLocaleString('es-AR')} > trigger fired at ${event.cron}: ${body.message}`);
 	},
 } satisfies ExportedHandler<Env>;
 
-async function handleError(env: Env, message: string): Promise<void> {
+async function handleError(env: Env, message: string, environment: string): Promise<void> {
 	console.error(`${new Date().toLocaleString('es-AR')} > cron failed at: ${message}`);
 	const resend = new Resend(env.RESEND_KEY);
 	const { error } = await resend.emails.send({
 		from: 'Alertas Sistemas: qmp <alerts@robot.ezegatica.com>',
 		to: 'Eze <qmp@ezegatica.com>',
-		subject: 'Base de datos de QMP caída',
+		subject: `Base de datos de QMP caída (${environment})`,
 		html: `
-		<p>La pegada de hank (healthy) tiró error</p>
+		<p>La pegada de hank (healthy) tiró error para el ambiente ${environment}</p>
 		<p><pre>${message}</pre></p>
 		<hr>
 		<a href="https://dash.cloudflare.com/c0d489e9d849b2347d806c2556279c9c/ezegatica.com">Link a Cloudflare</a> |
-		<a href="https://supabase.com/dashboard/project/harbmctzkgwzpxyhsdiq">Link a Supabase</a> |
+		<a href="${environment === 'production' ? 'https://supabase.com/dashboard/project/harbmctzkgwzpxyhsdiq' : 'https://supabase.com/dashboard/project/wyjqygsjfhobfflgvksh'}">Link a Supabase</a> |
 		<a href="https://vercel.com/gati/qmp">Link a Vercel</a> |
-		<a href="https://qmp.ezegatica.com/app">Link a Que me Pongo</a>
+		<a href="${environment === 'production' ? 'https://qmp.ezegatica.com/app' : 'https://qmp.preview.ezegatica.com'}">Link a Que me Pongo</a>
 		`,
 	});
 	if (error) {
