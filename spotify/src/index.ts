@@ -50,18 +50,24 @@ export default {
         };
       })) as SpotifyResponse;
 
+      const isRaw = request.url.includes("raw");
+      const body = isRaw
+        ? data : 
+        {
+          title: data.item.name,
+          artist: data.item.artists[0].name,
+          album: data.item.album.name,
+          albumArt: data.item.album.images[2].url,
+          link: data.item.external_urls.spotify,
+        };
+
     const response = Response.json(
       data.error
         ? {
             error: data.error,
           }
-        : {
-            title: data.item.name,
-            artist: data.item.artists[0].name,
-            album: data.item.album.name,
-            albumArt: data.item.album.images[2].url,
-            link: data.item.external_urls.spotify,
-          },
+        :
+        body,
       {
         status: data.error ? data.error.status : 200,
       }
