@@ -2,4 +2,5 @@
 
 interface Env {
 	USERS_KV: KVNamespace;
+	USERS_DB: D1Database;
 }
