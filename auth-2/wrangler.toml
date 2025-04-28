@@ -22,8 +22,22 @@ enabled = true
 # - https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 # Note: Use secrets to store sensitive data.
 # - https://developers.cloudflare.com/workers/configuration/secrets/
-# [vars]
-# MY_VARIABLE = "production_value"
+[vars]
+# Paste your generated RSA public key here
+PUBLIC_KEY = '''-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn+5hLDCyDLKcU7CIxuyM
+LHB0eUSmv17I6dxFFVZJU20D0Xjo0xXJeVripdQ9+GOiF6clDWbsivbJ+mdX3RE/
+7kP4vZEyLWtm85TdYkPt31iYoeYcUuSekV9qr8MVsgzjben8l3xipcJO7PYDlU5/
+/EcY7PZ2lNh1H59pxlqSQIK+rEp+8EgkUUABXtE4I/73rPyYbQl6btzwqY7s9Cbx
+/9S/TKFtVD8dQnWSWNDxXJDJ/YVF/BbbDimhtr/fGLzUXK3EbGK3xkI+VXaL7Y1H
+yiyVMl43d6UVrmcZbsAp31QtprJ/MfXd9X6xyD9xgnirRvg3cLittTA7A8p1lGFh
+GwIDAQAB
+-----END PUBLIC KEY-----'''
+
+# Optional: Google OAuth values
+GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"
+GOOGLE_CLIENT_SECRET = "YOUR_GOOGLE_CLIENT_SECRET"
+GOOGLE_REDIRECT_URI = "https://YOUR_WORKER_DOMAIN/auth/google/callback"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#workers-ai
@@ -46,6 +60,8 @@ enabled = true
 binding = "USERS_DB"
 database_name = "user-sso"
 database_id = "fd27a886-1839-4921-ad78-b09ecc3e7dca"
+migrations_table = "d1_migrations"
+migrations_dir = "migrations"
 
 # Bind a dispatch namespace. Use Workers for Platforms to deploy serverless functions programmatically on behalf of your customers.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#dispatch-namespace-bindings-workers-for-platforms

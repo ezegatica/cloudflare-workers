@@ -170,3 +170,8 @@ dist
 
 .dev.vars
 .wrangler/
+
+# generated public and private keys
+private.pem
+private.pem.copy
+public.pem
