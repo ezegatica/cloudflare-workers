@@ -230,14 +230,13 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
         // Get the public key from the environment
         const { publicKey } = await this.getKeys(env);
         // Verify the JWT using the public key
-        const { payload } = await jwtVerify(token, publicKey, { algorithms: ['RS256'] });
+        const { payload } = await jwtVerify(token, publicKey);
         // Check if the token is expired
         if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
           return false;
         }
         // Check if the token is revoked
         const db = env.USERS_DB;
-        console.log({token, payload, publicKey})
         const tok = await db.prepare('SELECT revoked FROM tokens WHERE jti = ?').bind(payload.jti).first<{revoked:number}>();
         if (!tok || tok.revoked) {
           return false;
