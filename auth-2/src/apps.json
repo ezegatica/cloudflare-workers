@@ -1,5 +1,10 @@
 {
 	"app-1": { "id": "app-1", "displayName": "App 1", "redirect_url": "https://app-1.ezegatica.com/api/auth/redirect" },
 	"app-2": { "id": "app-2", "displayName": "App 2", "redirect_url": "https://app-2.ezegatica.com/users/redirect" },
-	"dashboard-local": { "id": "dashboard-local", "displayName": "Dashboard Local", "redirect_url": "http://localhost:3000/api/public/auth/redirect" }
+	"dashboard-local": {
+		"id": "dashboard-local",
+		"admin_only": true,
+		"displayName": "Dashboard Local",
+		"redirect_url": "http://localhost:3000/api/public/auth/redirect"
+	}
 }
