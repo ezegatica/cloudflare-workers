@@ -34,7 +34,10 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 		const { privateKey } = await this.getKeys();
 		const accessJti = uuidv4();
 		const accessToken = await new SignJWT({ sub: userId, role: userRole, jti: accessJti,  })
-			.setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
+			.setProtectedHeader({ alg: 'RS256', typ: 'JWT',
+				x5t: 'sha256', // Specify the x5t header with the SHA-256 thumbprint}
+				x5u: 'https://sso.eze.net.ar/cert.pem', // URL to the public key
+			 })
 			.setIssuedAt()
 			.setExpirationTime('90d')
 			.sign(privateKey);
@@ -198,6 +201,9 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 		if (url.pathname === '/public-key' && request.method === 'GET') {
 			return this.handlePublicKey();
 		}
+		if (url.pathname === '/cert.pem' && request.method === 'GET') {
+			return this.handleCert();
+		}
 		if (url.pathname === '/validate' && request.method === 'POST') {
 			const { token } = (await request.json()) as { token: string };
 			if (!token) return this.createErrorResponse('Missing token', 400);
@@ -208,6 +214,14 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 			return this.createJsonResponse({ valid });
 		}
 		return new Response('Not Found', { status: 404 });
+	}
+
+	private async handleCert() {
+		const certPem = this.env.CERT_PEM;
+		if (!certPem) return new Response('Certificate not found', { status: 404 });
+		return new Response(certPem, {
+			headers: { 'Content-Type': 'text/plain' },
+		});
 	}
 
 	private async getKeys() {
