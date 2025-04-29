@@ -6,5 +6,17 @@
 		"admin_only": true,
 		"displayName": "Dashboard Local",
 		"redirect_url": "http://localhost:3000/api/public/auth/redirect"
+	},
+	"dashboard-dev": {
+		"id": "dashboard-dev",
+		"admin_only": true,
+		"displayName": "Dashboard Development",
+		"redirect_url": "https://admin.preview.ezegatica.com/api/public/auth/redirect"
+	},
+	"dashboard": {
+		"id": "dashboard",
+		"admin_only": true,
+		"displayName": "Dashboard",
+		"redirect_url": "https://admin.ezegatica.com/api/public/auth/redirect"
 	}
 }

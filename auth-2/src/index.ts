@@ -34,7 +34,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 		const { privateKey } = await this.getKeys();
 		const accessJti = uuidv4();
 		const accessToken = await new SignJWT({ sub: userId, role: userRole, jti: accessJti,  })
-			.setProtectedHeader({ alg: 'RS256' })
+			.setProtectedHeader({ alg: 'RS256', typ: 'JWT' })
 			.setIssuedAt()
 			.setExpirationTime('90d')
 			.sign(privateKey);
