@@ -13,6 +13,12 @@
 		"displayName": "Dashboard Development",
 		"redirect_url": "https://admin.preview.ezegatica.com/api/public/auth/redirect"
 	},
+	"dashboard-preview": {
+		"id": "dashboard-preview",
+		"admin_only": true,
+		"displayName": "Dashboard (Preview)",
+		"redirect_url": "https://sso.admin.preview.ezegatica.com/api/public/auth/redirect"
+	},
 	"dashboard": {
 		"id": "dashboard",
 		"admin_only": true,
