@@ -7,6 +7,7 @@ import { loginPage, registerPage } from './templates';
 import appsList from './apps.json';
 import { AppListItem } from './interfaces';
 import jwt from '@tsndr/cloudflare-worker-jwt';
+import UserRouter from './users.handler';
 
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
@@ -23,6 +24,7 @@ import jwt from '@tsndr/cloudflare-worker-jwt';
 
 export default class AuthWorker extends WorkerEntrypoint<Env> {
 	private appsList: Record<string, AppListItem> = appsList;
+	private usersRouter = new UserRouter(this);
 
 	/**
 	 * Creates and stores a JWT token for a user
@@ -57,7 +59,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	 * @param options Additional verification options
 	 * @returns Result object with validation status and payload if valid
 	 */
-	private async verifyToken(
+	public async verifyToken(
 		token: string,
 		options: {
 			algorithm: 'RS256' | 'HS256';
@@ -151,7 +153,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	/**
 	 * Creates a JSON response with appropriate headers
 	 */
-	private createJsonResponse(data: any, status: number = 200): Response {
+	public createJsonResponse(data: any, status: number = 200): Response {
 		return new Response(JSON.stringify(data), {
 			status,
 			headers: { 'Content-Type': 'application/json' },
@@ -161,7 +163,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	/**
 	 * Creates an error response with appropriate status code and format
 	 */
-	private createErrorResponse(message: string, status: number = 400): Response {
+	public createErrorResponse(message: string, status: number = 400): Response {
 		console.error(message);
 		return this.createJsonResponse({ error: message }, status);
 	}
@@ -169,7 +171,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	/**
 	 * Creates a redirect response with token in query params
 	 */
-	private createTokenRedirectResponse(redirectUrl: URL, accessToken: string): Response {
+	public createTokenRedirectResponse(redirectUrl: URL, accessToken: string): Response {
 		redirectUrl.searchParams.set('access_token', accessToken);
 		return this.createJsonResponse({ redirect: redirectUrl.toString(), access_token: accessToken });
 	}
@@ -212,6 +214,9 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 			if (!appName) return this.createErrorResponse('Missing app', 400);
 			const valid = await this.validateSSO(token, appName);
 			return this.createJsonResponse({ valid });
+		}
+		if (url.pathname.startsWith('/users')) {
+			return this.usersRouter.handle(request, this.env)
 		}
 		return new Response('Not Found', { status: 404 });
 	}
@@ -401,13 +406,13 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 
 	private async handlePublicKey() {
 		// Return the RSA public key for JWT verification
-		const publicKey = await this.getPublicKey();
+		const publicKey = this.getPublicKey();
 		return new Response(publicKey, {
 			headers: { 'Content-Type': 'text/plain' },
 		});
 	}
 
-	async getPublicKey() {
+	getPublicKey() {
 		return this.env.PUBLIC_KEY;
 	}
 

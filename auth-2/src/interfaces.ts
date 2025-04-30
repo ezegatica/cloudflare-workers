@@ -2,8 +2,17 @@ export interface IUser {
     id: string;
     email: string;
     password?: string;
-    googleId?: string;
+    google_id?: string;
     role: 'admin' | 'user';
+}
+
+export interface IToken {
+    id: string;
+    user_id: string;
+    jti: string;
+    revoked: boolean;
+    expires_at: Date;
+    created_at: Date;
 }
 
 export interface AppListItem {
