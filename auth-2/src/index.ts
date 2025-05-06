@@ -14,6 +14,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	private appsList: Record<string, AppListItem> = appsList;
 	private usersRouter = new UserRouter(this);
 	private timestampThreshold = 5; // Allow 5 seconds difference
+	private readonly cookieMaxAge = 90 * 24 * 3600;
 
 	/**
 	 * Decrypts encrypted data using private key
@@ -76,7 +77,7 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 			.sign(privateKey);
 
 		// Store token in database
-		const expiresAt = Math.floor(Date.now() / 1000) + 90 * 24 * 3600;
+		const expiresAt = Math.floor(Date.now() / 1000) + this.cookieMaxAge;
 		await this.env.USERS_DB.prepare('INSERT INTO tokens (jti, user_id, expires_at) VALUES (?, ?, ?)')
 			.bind(accessJti, userId, expiresAt)
 			.run();
@@ -204,13 +205,39 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	 */
 	public createTokenRedirectResponse(redirectUrl: URL, accessToken: string): Response {
 		redirectUrl.searchParams.set('access_token', accessToken);
-		return this.createJsonResponse({ redirect: redirectUrl.toString(), access_token: accessToken });
+		const body = { redirect: redirectUrl.toString(), access_token: accessToken };
+		const res = new Response(JSON.stringify(body), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' }
+		});
+		res.headers.set('Set-Cookie', `access_token=${accessToken}; HttpOnly; Path=/; Max-Age=${this.cookieMaxAge}; SameSite=Lax`);
+		return res;
 	}
 
 	async fetch(request: Request) {
 		const url = new URL(request.url);
 		if (url.pathname === '/') return new Response('Hello World!');
 		if (url.pathname === '/login' && request.method === 'GET') {
+			const cookieHeader = request.headers.get('Cookie') || '';
+			const match = /(?:^|; )access_token=([^;]+)/.exec(cookieHeader);
+			if (match) {
+				const token = match[1];
+				const appName = url.searchParams.get('app');
+				if (appName) {
+					const { valid } = await this.verifyToken(token, {
+						algorithm: 'RS256',
+						checkRevocation: true,
+						checkUser: true,
+						checkApp: appName
+					});
+					if (valid) {
+						const app = this.appsList[appName];
+						const redirectUrl = new URL(app.redirect_url);
+						redirectUrl.searchParams.set('access_token', token);
+						return new Response(null, { status: 302, headers: { 'Location': redirectUrl.toString() } });
+					}
+				}
+			}
 			return this.renderLoginPage(url, this.env);
 		}
 		if (url.pathname === '/login' && request.method === 'POST') {
@@ -427,7 +454,13 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 
 		const redirectUrl = new URL(app.redirect_url);
 		redirectUrl.searchParams.set('access_token', accessToken);
-		return Response.redirect(redirectUrl.toString(), 302);
+		return new Response(null, {
+			status: 302,
+			headers: {
+				'Location': redirectUrl.toString(),
+				'Set-Cookie': `access_token=${accessToken}; HttpOnly; Path=/; Max-Age=${this.cookieMaxAge}; SameSite=Lax`
+			}
+		});
 	}
 
 	private async renderRegisterPage(url: URL) {
