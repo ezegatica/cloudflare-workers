@@ -8,23 +8,54 @@ import appsList from './apps.json';
 import { AppListItem } from './interfaces';
 import jwt from '@tsndr/cloudflare-worker-jwt';
 import UserRouter from './users.handler';
-
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import forge from 'node-forge';
 
 export default class AuthWorker extends WorkerEntrypoint<Env> {
 	private appsList: Record<string, AppListItem> = appsList;
 	private usersRouter = new UserRouter(this);
+	private timestampThreshold = 5; // Allow 5 seconds difference
+
+	/**
+	 * Decrypts encrypted data using private key
+	 * @param encryptedData The RSA encrypted data
+	 * @returns Decrypted data as string
+	 */
+	private async decryptData(encryptedData: string): Promise<string> {
+		try {
+			// Using node-forge for RSA decryption
+			const privateKeyPem = this.env.PRIVATE_KEY_SECRET;
+			const forgePrivateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+			
+			// JSEncrypt returns base64-encoded data
+			try {
+				// Try with PKCS#1 v1.5 padding first (most commonly used by JSEncrypt)
+				return forgePrivateKey.decrypt(forge.util.decode64(encryptedData), 'RSAES-PKCS1-V1_5');
+			} catch (innerError) {
+				console.log("First decryption method failed, trying RSA-OAEP", innerError);
+				
+				// If the first method fails, try with RSA-OAEP
+				return forgePrivateKey.decrypt(forge.util.decode64(encryptedData), 'RSA-OAEP');
+			}
+		} catch (error) {
+			console.error('Decryption error:', error);
+			throw new Error('Failed to decrypt data');
+		}
+	}
+
+	/**
+	 * Validates the timestamp is within threshold
+	 * @param timestamp The timestamp to validate
+	 * @returns True if valid, false otherwise
+	 */
+	private validateTimestamp(timestamp: string): boolean {
+		const now = Math.floor(Date.now() / 1000);
+		const ts = parseInt(timestamp, 10);
+		
+		if (isNaN(ts)) return false;
+		
+		const diff = Math.abs(now - ts);
+		return diff <= this.timestampThreshold;
+	}
 
 	/**
 	 * Creates and stores a JWT token for a user
@@ -242,13 +273,45 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 		if (!appName) return new Response('Insert an app', { status: 400 });
 		const app = this.appsList[appName];
 		if (!app) return new Response('Invalid app', { status: 400 });
-		return new Response(loginPage(app), { headers: { 'Content-Type': 'text/html' } });
+		return new Response(loginPage(app, env.PUBLIC_KEY), { headers: { 'Content-Type': 'text/html' } });
 	}
 
 	private async handleLogin(request: Request, env: Env) {
-		const { email, password, app } = Object.fromEntries((await request.formData()) as any);
+		const formData = await request.formData();
+		const email = formData.get('email') as string;
+		const encryptedPassword = formData.get('encryptedPassword') as string;
+		const timestamp = formData.get('timestamp') as string;
+		const app = formData.get('app') as string;
+		
 		const appObj = this.appsList[app];
 		if (!appObj) return this.createErrorResponse('Invalid app', 400);
+
+		// Validate timestamp from form data
+		if (!this.validateTimestamp(timestamp)) {
+			return this.createErrorResponse('Request expired or invalid timestamp', 400);
+		}
+
+		// Decrypt the data (now timestamp|password)
+		let decryptedData;
+		try {
+			decryptedData = await this.decryptData(encryptedPassword);
+		} catch (error) {
+			return this.createErrorResponse('Invalid encrypted data', 400);
+		}
+
+		// Split decrypted data on first '|' occurrence - timestamp is first, password may contain pipe characters
+		const firstPipeIndex = decryptedData.indexOf('|');
+		if (firstPipeIndex === -1) {
+			return this.createErrorResponse('Malformed encrypted data', 400);
+		}
+		
+		const embeddedTimestamp = decryptedData.substring(0, firstPipeIndex);
+		const password = decryptedData.substring(firstPipeIndex + 1);
+		
+		// Validate embedded timestamp matches the form timestamp and is within threshold
+		if (embeddedTimestamp !== timestamp || !this.validateTimestamp(embeddedTimestamp)) {
+			return this.createErrorResponse('Security validation failed', 400);
+		}
 
 		const db = env.USERS_DB;
 		const userRes = await db
@@ -372,20 +435,51 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 		if (!appName) return new Response('Insert an app', { status: 400 });
 		const app = this.appsList[appName];
 		if (!app) return new Response('Invalid app', { status: 400 });
-		return new Response(registerPage(app), { headers: { 'Content-Type': 'text/html' } });
+		return new Response(registerPage(app, this.env.PUBLIC_KEY), { headers: { 'Content-Type': 'text/html' } });
 	}
 
 	private async handleRegister(request: Request, env: Env) {
-		const { email, password, app } = Object.fromEntries((await request.formData()) as any);
-		const db = env.USERS_DB;
+		const formData = await request.formData();
+		const email = formData.get('email') as string;
+		const encryptedPassword = formData.get('encryptedPassword') as string;
+		const timestamp = formData.get('timestamp') as string;
+		const app = formData.get('app') as string;
 
-		// Redirect to app using helper
 		const appObj = this.appsList[app];
 		if (!appObj) return this.createErrorResponse('Invalid app', 400);
 
 		if (appObj.admin_only) {
 			return this.createErrorResponse('Admin access required', 403);
 		}
+
+		// Validate timestamp from form data
+		if (!this.validateTimestamp(timestamp)) {
+			return this.createErrorResponse('Request expired or invalid timestamp', 400);
+		}
+
+		// Decrypt the data (now timestamp|password)
+		let decryptedData;
+		try {
+			decryptedData = await this.decryptData(encryptedPassword);
+		} catch (error) {
+			return this.createErrorResponse('Invalid encrypted data', 400);
+		}
+
+		// Split decrypted data on first '|' occurrence - timestamp is first, password may contain pipe characters
+		const firstPipeIndex = decryptedData.indexOf('|');
+		if (firstPipeIndex === -1) {
+			return this.createErrorResponse('Malformed encrypted data', 400);
+		}
+		
+		const embeddedTimestamp = decryptedData.substring(0, firstPipeIndex);
+		const password = decryptedData.substring(firstPipeIndex + 1);
+		
+		// Validate embedded timestamp matches the form timestamp and is within threshold
+		if (embeddedTimestamp !== timestamp || !this.validateTimestamp(embeddedTimestamp)) {
+			return this.createErrorResponse('Security validation failed', 400);
+		}
+
+		const db = env.USERS_DB;
 
 		// Check existing user
 		const existing = await db.prepare('SELECT id FROM users WHERE email = ?').bind(email).first<{ id: string }>();
