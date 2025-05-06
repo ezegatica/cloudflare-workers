@@ -22,8 +22,13 @@ enabled = true
 # - https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 # Note: Use secrets to store sensitive data.
 # - https://developers.cloudflare.com/workers/configuration/secrets/
-# [vars]
-# MY_VARIABLE = "production_value"
+[vars]
+# Paste your generated RSA public key here
+
+# Optional: Google OAuth values
+GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"
+GOOGLE_CLIENT_SECRET = "YOUR_GOOGLE_CLIENT_SECRET"
+GOOGLE_REDIRECT_URI = "https://YOUR_WORKER_DOMAIN/auth/google/callback"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#workers-ai
@@ -46,6 +51,8 @@ enabled = true
 binding = "USERS_DB"
 database_name = "user-sso"
 database_id = "fd27a886-1839-4921-ad78-b09ecc3e7dca"
+migrations_table = "d1_migrations"
+migrations_dir = "migrations"
 
 # Bind a dispatch namespace. Use Workers for Platforms to deploy serverless functions programmatically on behalf of your customers.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#dispatch-namespace-bindings-workers-for-platforms

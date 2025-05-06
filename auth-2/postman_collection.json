@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "AuthWorker SSO Collection",
+    "_postman_id": "cdd3bf6a-1f6e-4a8d-9f30-1234567890ab",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login Page",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/login?app=app-1",
+          "host": ["{{base_url}}"],
+          "path": ["login"],
+          "query": [{ "key": "app", "value": "app-1" }]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "email", "value": "user@example.com" },
+            { "key": "password", "value": "yourPassword" },
+            { "key": "app", "value": "app-1" }
+          ]
+        },
+        "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/refresh", "host": ["{{base_url}}"], "path": ["refresh"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Revoke Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/revoke", "host": ["{{base_url}}"], "path": ["revoke"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Google OAuth Start",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/google?app=app-1",
+          "host": ["{{base_url}}"],
+          "path": ["auth","google"],
+          "query": [{ "key": "app", "value": "app-1" }]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Google OAuth Callback",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/google/callback?code={{code}}&state={{state}}",
+          "host": ["{{base_url}}"],
+          "path": ["auth","google","callback"],
+          "query": [
+            { "key": "code", "value": "{{code}}" },
+            { "key": "state", "value": "{{state}}" }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    { "key": "base_url", "value": "https://your-worker-domain" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "access_token", "value": "" },
+    { "key": "code", "value": "" },
+    { "key": "state", "value": "" }
+  ]
+}

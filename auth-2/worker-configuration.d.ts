@@ -2,5 +2,11 @@
 
 interface Env {
 	USERS_KV: KVNamespace;
+	GOOGLE_CLIENT_ID: "YOUR_GOOGLE_CLIENT_ID";
+	GOOGLE_CLIENT_SECRET: "YOUR_GOOGLE_CLIENT_SECRET";
+	GOOGLE_REDIRECT_URI: "https://YOUR_WORKER_DOMAIN/auth/google/callback";
+	PRIVATE_KEY_SECRET: string;
+	PUBLIC_KEY: string;
+	CERT_PEM: string;
 	USERS_DB: D1Database;
 }

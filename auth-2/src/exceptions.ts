@@ -81,3 +81,17 @@ export class UnauthorizedException extends Response {
     });
   }
 }
+
+export class InternalServerErrorException extends Response {
+  constructor() {
+    super("Internal Server Error", {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+}

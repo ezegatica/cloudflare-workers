@@ -1,0 +1,74 @@
+// For implementation in projects, replace "appName" with your actual app name on the JSON file
+import axios, { AxiosInstance } from 'axios';
+
+export interface AuthAPIOptions {
+  /** Base URL of your auth worker, e.g. https://auth.example.com */
+  baseURL: string;
+}
+
+export class AuthAPI {
+  private client: AxiosInstance;
+  private appName = 'app-1';
+
+  constructor(options: AuthAPIOptions) {
+    this.client = axios.create({ baseURL: options.baseURL });
+  }
+
+  /**
+   * Perform user login with email/password.
+   * Returns the redirect URL containing tokens.
+   */
+  async login(email: string, password: string): Promise<string> {
+    const params = new URLSearchParams({ email, password, app: this.appName });
+    const res = await this.client.post<{ redirect: string }>('/login', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return res.data.redirect;
+  }
+
+  /**
+   * Register a new user with email/password.
+   * Returns the redirect URL containing tokens.
+   */
+  async register(email: string, password: string): Promise<string> {
+    const params = new URLSearchParams({ email, password, app: this.appName });
+    const res = await this.client.post<{ redirect: string }>('/register', params, {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    return res.data.redirect;
+  }
+
+  /**
+   * Exchange a refresh token for a new access token.
+   */
+  async refreshToken(refreshToken: string): Promise<string> {
+    const res = await this.client.post<{ access_token: string }>('/refresh', { refresh_token: refreshToken }, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return res.data.access_token;
+  }
+
+  /**
+   * Revoke a refresh token. Throws if an error occurs.
+   */
+  async revokeToken(refreshToken: string): Promise<void> {
+    await this.client.post('/revoke', { refresh_token: refreshToken }, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  /**
+   * Fetch the public key used to verify JWTs.
+   */
+  async getPublicKey(): Promise<string> {
+    const res = await this.client.get<string>('/public-key', { responseType: 'text' });
+    return res.data;
+  }
+
+  /**
+   * Get the URL to redirect users for Google OAuth login.
+   */
+  getGoogleLoginUrl(): string {
+    return `${this.client.defaults.baseURL}/auth/google?app=${encodeURIComponent(this.appName)}`;
+  }
+}

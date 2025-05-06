@@ -13,7 +13,7 @@ router.use(async ({ env, req }) => {
 			console.warn('No token provided');
 			throw new UnauthorizedException();
 		}
-		const isValidToken = await env.AUTH.validate(token);
+		const isValidToken = await env.AUTH.validateSSO(token, 'dashboard-local');
 		if (!isValidToken) {
 			console.warn('Invalid token', token);
 			throw new UnauthorizedException();
