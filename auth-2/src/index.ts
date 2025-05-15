@@ -183,6 +183,19 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	}
 
 	/**
+	 * Unified token revocation helper
+	 */
+	private async revokeToken(token: string): Promise<boolean> {
+		const { valid, payload } = await this.verifyToken(token, { algorithm: 'RS256', checkRevocation: true, checkUser: true });
+		if (!valid || !payload?.jti) return false;
+		const res = await this.env.USERS_DB
+			.prepare('UPDATE tokens SET revoked = 1 WHERE jti = ?')
+			.bind(payload.jti)
+			.run();
+		return res.success;
+	}
+
+	/**
 	 * Creates a JSON response with appropriate headers
 	 */
 	public createJsonResponse(data: any, status: number = 200): Response {
@@ -235,6 +248,11 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 						const redirectUrl = new URL(app.redirect_url);
 						redirectUrl.searchParams.set('access_token', token);
 						return new Response(null, { status: 302, headers: { 'Location': redirectUrl.toString() } });
+					} else {
+						// Invalid or expired token: clear cookie
+						const loginRes = await this.renderLoginPage(url, this.env);
+						loginRes.headers.set('Set-Cookie', `access_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
+						return loginRes;
 					}
 				}
 			}
@@ -250,7 +268,11 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 			return this.handleGoogleCallback(url, this.env);
 		}
 		if (url.pathname === '/revoke' && request.method === 'POST') {
-			return this.handleRevoke(request, this.env);
+			return this.handleRevoke(request);
+		}
+		// Logout endpoint: revoke cookie token and clear cookie
+		if (url.pathname === '/logout' && request.method === 'POST') {
+			return this.handleLogout(request);
 		}
 		if (url.pathname === '/register' && request.method === 'GET') {
 			return this.renderRegisterPage(url);
@@ -362,26 +384,28 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 		return this.createTokenRedirectResponse(redirectUrl, accessToken);
 	}
 
-	private async handleRevoke(request: Request, env: Env) {
+	private async handleRevoke(request: Request) {
 		const { access_token } = (await request.json()) as { access_token: string };
-
-    // Use the unified verification method
-		const { valid, payload } = await this.verifyToken(access_token, {
-			algorithm: 'RS256',
-      checkRevocation: true,
-      checkUser: true,
-		});
-
-		if (!valid || !payload || !payload.jti) {
-			return this.createErrorResponse('Invalid token', 400);
+		const success = await this.revokeToken(access_token);
+		if (success) {
+			return this.createJsonResponse({ message: 'Token revoked' });
 		}
+		return this.createErrorResponse('Failed to revoke', 400);
+	}
 
-		const db = env.USERS_DB;
-		const res = await db.prepare('UPDATE tokens SET revoked = 1 WHERE jti = ?').bind(payload.jti).run();
-		if (res.success) {
-      return this.createJsonResponse({ message: 'Token revoked' });
-    } 
-		return this.createErrorResponse('Failed to revoke', 500);
+	private async handleLogout(request: Request) {
+		const cookieHeader = request.headers.get('Cookie') || '';
+		const match = /(?:^|; )access_token=([^;]+)/.exec(cookieHeader);
+		if (!match) return this.createErrorResponse('No token found in cookies', 400);
+
+		const token = match[1];
+		const success = await this.revokeToken(token);
+		if (success) {
+			const response = this.createJsonResponse({ message: 'Logged out' });
+			response.headers.set('Set-Cookie', `access_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
+			return response;
+		}
+		return this.createErrorResponse('Failed to logout', 400);
 	}
 
 	private async handleGoogleAuth(url: URL, env: Env) {
