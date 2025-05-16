@@ -394,12 +394,11 @@ export default class AuthWorker extends WorkerEntrypoint<Env> {
 	}
 
 	private async handleLogout(request: Request) {
-		const cookieHeader = request.headers.get('Cookie') || '';
-		const match = /(?:^|; )access_token=([^;]+)/.exec(cookieHeader);
-		if (!match) return this.createErrorResponse('No token found in cookies', 400);
+		const body = (await request.json()) as { access_token: string };
+		const access_token = body.access_token;
+		if (!access_token) return this.createErrorResponse('No token found in body', 400);
 
-		const token = match[1];
-		const success = await this.revokeToken(token);
+		const success = await this.revokeToken(access_token);
 		if (success) {
 			const response = this.createJsonResponse({ message: 'Logged out' });
 			response.headers.set('Set-Cookie', `access_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
